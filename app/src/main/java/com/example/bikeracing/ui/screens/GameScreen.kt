@@ -1,210 +1,341 @@
 package com.example.bikeracing.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bikeracing.domain.model.ControlType
-import com.example.bikeracing.domain.model.RacePhase
-import com.example.bikeracing.ui.gamehud.CountdownOverlay
-import com.example.bikeracing.ui.gamehud.GameControls
-import com.example.bikeracing.ui.gamehud.RaceHUD
-import com.example.bikeracing.ui.theme.DarkCard
-import com.example.bikeracing.ui.theme.NeonOrange
-import com.example.bikeracing.ui.theme.RacingRed
-import com.example.bikeracing.ui.theme.TextPrimary
-import com.example.bikeracing.ui.theme.TextSecondary
+import com.example.bikeracing.R
+import com.example.bikeracing.ui.theme.*
 import com.example.bikeracing.viewmodel.GameViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlin.math.roundToInt
+import kotlin.random.Random
+
+data class EnemyBike(
+    var x: Float,
+    var y: Float,
+    var speed: Int
+)
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
     levelId: Int,
-    onRaceFinished: () -> Unit,
-    onQuit: () -> Unit,
+    onBack: () -> Unit
 ) {
-    val raceState by viewModel.raceState.collectAsState()
-    val opponents by viewModel.opponents.collectAsState()
-    val settings by viewModel.gameSettings.collectAsState()
-    var showPauseMenu by remember { mutableStateOf(false) }
-    var showQuitConfirm by remember { mutableStateOf(false) }
-
-    // Start the race when screen appears
-    LaunchedEffect(levelId) {
-        viewModel.startRace(levelId)
-    }
-
-    // Watch for race finish
-    LaunchedEffect(raceState.phase) {
-        if (raceState.phase == RacePhase.FINISHED) {
-            viewModel.finishRace()
-            onRaceFinished()
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-
-        // ---- Nairobi City Scene — full-screen procedural Canvas renderer ----
-        // Draws: sky, Nairobi skyline, buildings, streetlights, road, traffic, player bike
-        NairobiSceneCanvas(
-            speedKmh = raceState.speedKmh,
-            lateralPosition = raceState.lateralPosition,
-            leanAngle = raceState.leanAngle,
-            isNitroActive = raceState.isNitroActive,
-            distanceTravelledKm = raceState.distanceTravelledKm,
-            opponents = opponents,
-            modifier = Modifier.fillMaxSize(),
+    var score by remember { mutableStateOf(0) }
+    var gameRunning by remember { mutableStateOf(true) }
+    var showGameOver by remember { mutableStateOf(false) }
+    
+    val configuration = LocalConfiguration.current
+    val screenWidthPx = with(LocalDensity.current) { configuration.screenWidthDp.dp.toPx() }
+    val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
+    
+    // Player bike state
+    var playerX by remember { mutableStateOf(screenWidthPx / 2 - 70f) }
+    var playerY by remember { mutableStateOf(screenHeightPx - 300f) }
+    val bikeWidth = 140f
+    val bikeHeight = 200f
+    
+    // Road scrolling
+    var road1Y by remember { mutableStateOf(0f) }
+    var road2Y by remember { mutableStateOf(-screenHeightPx) }
+    var roadSpeed by remember { mutableStateOf(15f) }
+    
+    // Enemy bikes
+    val enemyBikes = remember {
+        mutableStateListOf(
+            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -200f, 10),
+            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -400f, 12),
+            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -600f, 14)
         )
-
-        // ---- HUD Layer ----
-        if (raceState.phase == RacePhase.RACING || raceState.phase == RacePhase.PAUSED) {
-            RaceHUD(
-                state = raceState,
-                onPause = {
-                    viewModel.pauseRace()
-                    showPauseMenu = true
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-
-        // ---- Countdown overlay ----
-        if (raceState.phase == RacePhase.COUNTDOWN) {
-            CountdownOverlay(
-                value = raceState.countdownValue,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-
-        // ---- Controls ----
-        if (raceState.phase == RacePhase.RACING) {
-            GameControls(
-                viewModel = viewModel,
-                controlType = settings.controlType,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-
-        // ---- Pause Menu ----
-        AnimatedVisibility(
-            visible = showPauseMenu,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut(),
-        ) {
-            PauseMenu(
-                onResume = {
-                    viewModel.resumeRace()
-                    showPauseMenu = false
-                },
-                onRestart = {
-                    viewModel.startRace(levelId)
-                    showPauseMenu = false
-                },
-                onQuit = {
-                    showPauseMenu = false
-                    showQuitConfirm = true
-                },
-            )
-        }
-
-        // ---- Quit confirm dialog ----
-        if (showQuitConfirm) {
-            AlertDialog(
-                onDismissRequest = { showQuitConfirm = false },
-                title = { Text("Quit Race?", color = TextPrimary) },
-                text = { Text("All progress in this race will be lost.", color = TextSecondary) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showQuitConfirm = false
-                        viewModel.pauseRace()
-                        onQuit()
-                    }) { Text("QUIT", color = RacingRed, fontWeight = FontWeight.Bold) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showQuitConfirm = false; viewModel.resumeRace() }) {
-                        Text("CONTINUE", color = NeonOrange)
+    }
+    
+    // Game loop
+    LaunchedEffect(gameRunning) {
+        while (isActive && gameRunning) {
+            // Scroll road
+            road1Y += roadSpeed
+            road2Y += roadSpeed
+            
+            if (road1Y >= screenHeightPx) {
+                road1Y = road2Y - screenHeightPx
+            }
+            if (road2Y >= screenHeightPx) {
+                road2Y = road1Y - screenHeightPx
+            }
+            
+            // Move enemy bikes
+            enemyBikes.forEachIndexed { index, enemy ->
+                enemy.y += enemy.speed
+                
+                if (enemy.y > screenHeightPx) {
+                    enemy.y = -200f
+                    enemy.x = Random.nextFloat() * (screenWidthPx - bikeWidth)
+                    score++
+                    
+                    // Increase difficulty
+                    if (score % 5 == 0) {
+                        val speedIncrement = (1 + score / 20).coerceAtMost(10)
+                        enemy.speed += speedIncrement
+                        roadSpeed += speedIncrement
                     }
-                },
-                containerColor = DarkCard,
+                }
+            }
+            
+            // Check collisions
+            val padding = 30f
+            val playerRect = androidx.compose.ui.geometry.Rect(
+                playerX + padding,
+                playerY + padding,
+                playerX + bikeWidth - padding,
+                playerY + bikeHeight - padding
             )
+            
+            for (enemy in enemyBikes) {
+                val enemyRect = androidx.compose.ui.geometry.Rect(
+                    enemy.x + padding,
+                    enemy.y + padding,
+                    enemy.x + bikeWidth - padding,
+                    enemy.y + bikeHeight - padding
+                )
+                
+                if (playerRect.overlaps(enemyRect)) {
+                    gameRunning = false
+                    showGameOver = true
+                    break
+                }
+            }
+            
+            delay(30)
         }
     }
-}
-
-@Composable
-private fun PauseMenu(
-    onResume: () -> Unit,
-    onRestart: () -> Unit,
-    onQuit: () -> Unit,
-) {
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xCC050510)),
-        contentAlignment = Alignment.Center,
+            .background(Color(0xFF2a2a2a))
     ) {
-        Column(
+        // Road backgrounds - scrolling
+        Image(
+            painter = painterResource(id = R.drawable.road),
+            contentDescription = "Road",
             modifier = Modifier
-                .width(280.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(DarkCard)
-                .border(1.dp, NeonOrange.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .fillMaxWidth()
+                .height(with(LocalDensity.current) { screenHeightPx.toDp() })
+                .offset { IntOffset(0, road1Y.roundToInt()) },
+            contentScale = ContentScale.FillBounds
+        )
+        
+        Image(
+            painter = painterResource(id = R.drawable.road),
+            contentDescription = "Road",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(with(LocalDensity.current) { screenHeightPx.toDp() })
+                .offset { IntOffset(0, road2Y.roundToInt()) },
+            contentScale = ContentScale.FillBounds
+        )
+        
+        // Enemy bikes
+        enemyBikes.forEach { enemy ->
+            Image(
+                painter = painterResource(id = R.drawable.bikeblue),
+                contentDescription = "Enemy Bike",
+                modifier = Modifier
+                    .size(140.dp, 200.dp)
+                    .offset {
+                        IntOffset(
+                            enemy.x.roundToInt(),
+                            enemy.y.roundToInt()
+                        )
+                    }
+            )
+        }
+        
+        // Player bike
+        Image(
+            painter = painterResource(id = R.drawable.redbike),
+            contentDescription = "Player Bike",
+            modifier = Modifier
+                .size(140.dp, 200.dp)
+                .offset {
+                    IntOffset(
+                        playerX.roundToInt(),
+                        playerY.roundToInt()
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        
+                        if (gameRunning) {
+                            val newX = (playerX + dragAmount.x).coerceIn(
+                                0f,
+                                screenWidthPx - bikeWidth
+                            )
+                            val newY = (playerY + dragAmount.y).coerceIn(
+                                0f,
+                                screenHeightPx - bikeHeight
+                            )
+                            
+                            playerX = newX
+                            playerY = newY
+                        }
+                    }
+                }
+        )
+        
+        // Score display
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 40.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = DarkCard.copy(alpha = 0.9f),
+            shadowElevation = 8.dp
         ) {
-            Text("PAUSED", color = TextPrimary, fontWeight = FontWeight.Black, fontSize = 24.sp, letterSpacing = 3.sp)
-            Spacer(Modifier.height(4.dp))
-            PauseMenuButton("▶  RESUME", NeonOrange, onResume)
-            PauseMenuButton("↺  RESTART", NeonOrange.copy(alpha = 0.7f), onRestart)
-            PauseMenuButton("✕  QUIT RACE", RacingRed.copy(alpha = 0.8f), onQuit)
+            Text(
+                text = "SCORE: $score",
+                color = NeonOrange,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            )
+        }
+        
+        // Game Over Dialog
+        if (showGameOver) {
+            GameOverDialog(
+                score = score,
+                onRestart = {
+                    // Reset game
+                    score = 0
+                    gameRunning = true
+                    showGameOver = false
+                    roadSpeed = 15f
+                    playerX = screenWidthPx / 2 - 70f
+                    playerY = screenHeightPx - 300f
+                    road1Y = 0f
+                    road2Y = -screenHeightPx
+                    
+                    enemyBikes.clear()
+                    enemyBikes.addAll(
+                        listOf(
+                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -200f, 10),
+                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -400f, 12),
+                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -600f, 14)
+                        )
+                    )
+                },
+                onExit = {
+                    viewModel.updatePlayerStats(score, score > 0)
+                    onBack()
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun PauseMenuButton(text: String, color: Color, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(color.copy(alpha = 0.15f))
-            .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-            .clickable { onClick() }
-            .padding(14.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, color = color, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-    }
+private fun GameOverDialog(
+    score: Int,
+    onRestart: () -> Unit,
+    onExit: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { },
+        containerColor = DarkCard,
+        title = {
+            Text(
+                "GAME OVER!",
+                color = RacingRed,
+                fontWeight = FontWeight.Black,
+                fontSize = 32.sp,
+                letterSpacing = 3.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "FINAL SCORE",
+                    color = TextSecondary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "$score",
+                    color = NeonOrange,
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onRestart,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonOrange
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text(
+                    "PLAY AGAIN",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onExit,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = TextPrimary
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text(
+                    "EXIT",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
+            }
+        }
+    )
 }
