@@ -113,16 +113,11 @@ fun AppNavGraph() {
             GameScreen(
                 viewModel = viewModel,
                 levelId = levelId,
-                onRaceFinished = {
-                    navController.navigate(Screen.GameResult.createRoute(levelId)) {
-                        popUpTo(Screen.Game.route) { inclusive = true }
-                    }
-                },
-                onQuit = {
+                onBack = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                },
+                }
             )
         }
         composable(
