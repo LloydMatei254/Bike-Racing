@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bikeracing.ui.theme.*
 import com.example.bikeracing.viewmodel.GameViewModel
-import kotlin.math.sin
 
 @Composable
 fun HomeScreen(
