@@ -15,10 +15,15 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bikeracing.R
+import com.example.bikeracing.domain.model.PlayerProfile
 import com.example.bikeracing.ui.theme.*
 import com.example.bikeracing.viewmodel.GameViewModel
 
@@ -36,7 +41,37 @@ fun HomeScreen(
     onDailyRewardClick: () -> Unit,
 ) {
     val profile by viewModel.playerProfile.collectAsState()
+    val dailyAvailable = viewModel.isDailyRewardAvailable()
 
+    HomeScreenContent(
+        profile = profile,
+        dailyAvailable = dailyAvailable,
+        onNavigate = onNavigate,
+        onPlayClick = onPlayClick,
+        onCareerClick = onCareerClick,
+        onGarageClick = onGarageClick,
+        onShopClick = onShopClick,
+        onSettingsClick = onSettingsClick,
+        onProfileClick = onProfileClick,
+        onLeaderboardClick = onLeaderboardClick,
+        onDailyRewardClick = onDailyRewardClick,
+    )
+}
+
+@Composable
+private fun HomeScreenContent(
+    profile: PlayerProfile,
+    dailyAvailable: Boolean,
+    onNavigate: (com.example.bikeracing.ui.navigation.Screen) -> Unit = {},
+    onPlayClick: () -> Unit = {},
+    onCareerClick: () -> Unit = {},
+    onGarageClick: () -> Unit = {},
+    onShopClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onLeaderboardClick: () -> Unit = {},
+    onDailyRewardClick: () -> Unit = {},
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "home_anim")
     val pulse by infiniteTransition.animateFloat(
         initialValue = 0.95f,
@@ -148,7 +183,7 @@ fun HomeScreen(
                 onDailyRewardClick = onDailyRewardClick,
                 onLeaderboardClick = onLeaderboardClick,
                 onSettingsClick = onSettingsClick,
-                dailyAvailable = viewModel.isDailyRewardAvailable()
+                dailyAvailable = dailyAvailable
             )
 
             Spacer(Modifier.weight(1f))
@@ -317,7 +352,14 @@ private fun GameLogoSection(pulse: Float, glowAlpha: Float) {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text("🏍", fontSize = 56.sp)
+                Image(
+                    painter = painterResource(id = R.drawable.redbike),
+                    contentDescription = "Racing Bike",
+                    modifier = Modifier
+                        .size(85.dp)
+                        .rotate(-15f),
+                    contentScale = ContentScale.Fit
+                )
             }
         }
 
@@ -650,4 +692,20 @@ private fun formatNumber(n: Int): String = when {
     n >= 1_000_000 -> "${"%.1f".format(n / 1_000_000f)}M"
     n >= 1_000 -> "${"%.1f".format(n / 1_000f)}K"
     else -> "$n"
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenPreview() {
+    BikeRacingTheme {
+        HomeScreenContent(
+            profile = PlayerProfile(
+                name = "SpeedRacer",
+                level = 5,
+                coins = 12500,
+                gems = 45
+            ),
+            dailyAvailable = true
+        )
+    }
 }

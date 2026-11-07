@@ -23,14 +23,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bikeracing.R
 import com.example.bikeracing.ui.theme.*
 import com.example.bikeracing.viewmodel.GameViewModel
 import kotlin.math.roundToInt
@@ -144,7 +148,14 @@ fun ProfileScreen(viewModel: GameViewModel, onBack: () -> Unit) {
                                     .border(3.dp, NeonOrange, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("🏍", fontSize = 42.sp)
+                                Image(
+                                    painter = painterResource(id = R.drawable.redbike),
+                                    contentDescription = "Player Bike",
+                                    modifier = Modifier
+                                        .size(70.dp)
+                                        .rotate(-15f),
+                                    contentScale = ContentScale.Fit
+                                )
                             }
                         }
 
