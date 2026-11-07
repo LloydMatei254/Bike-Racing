@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -41,11 +42,15 @@ import androidx.compose.ui.unit.sp
 import com.example.bikeracing.data.local.LevelCatalog
 import com.example.bikeracing.domain.model.Environment
 import com.example.bikeracing.ui.components.StarRating
+import com.example.bikeracing.ui.components.SectionLabel
 import com.example.bikeracing.ui.theme.DarkBg
 import com.example.bikeracing.ui.theme.DarkCard
 import com.example.bikeracing.ui.theme.DarkCardAlt
+import com.example.bikeracing.ui.theme.DarkCardMid
 import com.example.bikeracing.ui.theme.DarkDivider
 import com.example.bikeracing.ui.theme.ElectricBlue
+import com.example.bikeracing.ui.theme.FireMid
+import com.example.bikeracing.ui.theme.FireStart
 import com.example.bikeracing.ui.theme.GoldColor
 import com.example.bikeracing.ui.theme.NeonCyan
 import com.example.bikeracing.ui.theme.NeonGreen
@@ -73,36 +78,54 @@ fun CareerMapScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(DarkCard)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
-                }
-                Text(
-                    "CAREER",
-                    color = TextPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.weight(1f),
-                )
-                // Total stars
-                val totalStars = levelProgress.values.sum()
-                val maxStars = LevelCatalog.all.size * 3
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("⭐", fontSize = 14.sp)
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        "$totalStars/$maxStars",
-                        color = GoldColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                    .background(Brush.horizontalGradient(listOf(DarkCard, DarkCardMid)))
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.horizontalGradient(listOf(NeonOrange.copy(alpha = 0.4f), DarkDivider)),
+                        shape = RoundedCornerShape(0.dp),
                     )
+                    .padding(vertical = 4.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                    }
+                    Text(
+                        "CAREER",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 20.sp,
+                        letterSpacing = 3.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // Total stars
+                    val totalStars = levelProgress.values.sum()
+                    val maxStars = LevelCatalog.all.size * 3
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(GoldColor.copy(alpha = 0.12f))
+                            .border(1.dp, GoldColor.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("⭐", fontSize = 13.sp)
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "$totalStars / $maxStars",
+                            color = GoldColor,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 13.sp,
+                        )
+                    }
                 }
             }
 
@@ -157,34 +180,38 @@ private fun WorldTab(
     val accent = environmentColor(world.environment)
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(
-                if (isSelected) Brush.horizontalGradient(listOf(accent.copy(alpha = 0.4f), accent.copy(alpha = 0.2f)))
-                else Brush.horizontalGradient(listOf(DarkCardAlt, DarkCardAlt))
+                if (isSelected)
+                    Brush.verticalGradient(listOf(accent.copy(alpha = 0.35f), DarkCardAlt))
+                else
+                    Brush.verticalGradient(listOf(DarkCardAlt, DarkCardAlt))
             )
             .border(
                 1.dp,
-                if (isSelected) accent else DarkDivider,
-                RoundedCornerShape(20.dp),
+                if (isSelected)
+                    Brush.verticalGradient(listOf(accent.copy(alpha = 0.8f), accent.copy(alpha = 0.2f)))
+                else
+                    Brush.verticalGradient(listOf(DarkDivider, DarkDivider)),
+                RoundedCornerShape(14.dp),
             )
             .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                environmentEmoji(world.environment),
-                fontSize = 16.sp,
-            )
+            Text(environmentEmoji(world.environment), fontSize = 18.sp)
+            Spacer(Modifier.height(2.dp))
             Text(
                 "W${world.id}",
                 color = if (isSelected) accent else TextSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.sp,
             )
             Text(
                 "$completedCount/5",
                 color = TextSecondary,
-                fontSize = 10.sp,
+                fontSize = 9.sp,
             )
         }
     }
@@ -203,32 +230,41 @@ private fun LevelCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(
                 if (completed)
-                    Brush.horizontalGradient(listOf(accent.copy(alpha = 0.12f), DarkCard))
+                    Brush.horizontalGradient(listOf(accent.copy(alpha = 0.14f), DarkCard))
                 else
                     Brush.horizontalGradient(listOf(DarkCard, DarkCard))
             )
             .border(
                 1.dp,
-                if (completed) accent.copy(alpha = 0.5f) else DarkDivider,
-                RoundedCornerShape(12.dp),
+                if (completed)
+                    Brush.horizontalGradient(listOf(accent.copy(alpha = 0.6f), DarkDivider))
+                else
+                    Brush.horizontalGradient(listOf(DarkDivider, DarkDivider)),
+                RoundedCornerShape(14.dp),
             )
             .clickable(enabled = unlocked) { onClick() }
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Level number badge
+        // Level badge
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
+                .size(46.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .background(
-                    if (unlocked) Brush.radialGradient(listOf(accent.copy(alpha = 0.4f), DarkCard))
-                    else Brush.radialGradient(listOf(DarkDivider, DarkCard))
+                    if (unlocked)
+                        Brush.radialGradient(listOf(accent.copy(alpha = 0.35f), DarkCard))
+                    else
+                        Brush.radialGradient(listOf(DarkDivider, DarkCard))
                 )
-                .border(1.dp, if (unlocked) accent else DarkDivider, CircleShape),
+                .border(
+                    1.dp,
+                    if (unlocked) accent.copy(alpha = 0.6f) else DarkDivider,
+                    RoundedCornerShape(12.dp),
+                ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -243,12 +279,12 @@ private fun LevelCard(
             Text(
                 level.name,
                 color = if (unlocked) TextPrimary else TextSecondary,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 fontSize = 14.sp,
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                "${level.trackLength} km · ${level.opponentCount} opponents",
+                "${level.trackLength} km  ·  ${level.opponentCount} riders",
                 color = TextSecondary,
                 fontSize = 11.sp,
             )
@@ -257,14 +293,20 @@ private fun LevelCard(
             StarRating(stars = stars)
             if (level.rewardCoins > 0) {
                 Spacer(Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🪙", fontSize = 10.sp)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(GoldColor.copy(alpha = 0.12f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("🪙", fontSize = 9.sp)
                     Spacer(Modifier.width(2.dp))
                     Text(
                         "${level.rewardCoins}",
                         color = GoldColor,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
                     )
                 }
             }

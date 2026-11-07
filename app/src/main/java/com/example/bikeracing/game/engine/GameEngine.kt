@@ -153,6 +153,8 @@ class GameEngine {
             playerPosition = position,
             score = newScore,
             overtakes = overtakeCount,
+            leanAngle = physics.leanAngle,
+            lateralPosition = physics.lateralPosition,
             phase = if (raceFinished) RacePhase.FINISHED else RacePhase.RACING,
         )
         _raceState.value = newState

@@ -21,6 +21,9 @@ data class RaceState(
     val isPaused: Boolean = false,
     val coins: Int = 0,
     val xp: Int = 0,
+    // Bike pose — needed by renderers
+    val leanAngle: Float = 0f,       // degrees, negative = left
+    val lateralPosition: Float = 0f, // -1..1 (track left/right)
 )
 
 enum class RacePhase {

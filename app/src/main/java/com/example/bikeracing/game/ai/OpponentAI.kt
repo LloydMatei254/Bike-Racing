@@ -5,6 +5,7 @@ import com.example.bikeracing.domain.model.Opponent
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sign
 import kotlin.random.Random
 
 data class AIBikeState(

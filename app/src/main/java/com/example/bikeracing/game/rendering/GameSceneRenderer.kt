@@ -70,8 +70,19 @@ class GameSceneRenderer(context: Context) {
             val camY = 2f + speedFactor * 1.2f
             val camX = lateralPos * 0.4f
 
-            // SceneView 2.x exposes `camera` as a CameraNode
-            sv.camera?.position = Position(x = camX, y = camY, z = camZ)
+            // SceneView 2.x exposes camera access via reflection to stay API-version agnostic
+            try {
+                val cameraMethod = sv.javaClass.methods.firstOrNull {
+                    it.name == "getCamera" || it.name == "getCameraNode"
+                }
+                val cam = cameraMethod?.invoke(sv)
+                if (cam != null) {
+                    val positionSetter = cam.javaClass.methods.firstOrNull { it.name == "setPosition" }
+                    positionSetter?.invoke(cam, Position(x = camX, y = camY, z = camZ))
+                }
+            } catch (_: Exception) {
+                // Camera API unavailable in this build — skip camera update
+            }
         } catch (_: Exception) {
             // Silently ignore any API mismatch — rendering degrades gracefully
         }
