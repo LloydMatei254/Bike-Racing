@@ -249,7 +249,6 @@ fun GameScreen(
                     )
                 },
                 onExit = {
-                    viewModel.updatePlayerStats(score, score > 0)
                     onBack()
                 }
             )
