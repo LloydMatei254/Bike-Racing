@@ -110,7 +110,7 @@ fun AppNavGraph() {
             arguments = listOf(navArgument("levelId") { type = NavType.IntType }),
         ) { backStack ->
             val levelId = backStack.arguments?.getInt("levelId") ?: 1
-            GameScreen(
+            IntegratedGameScreen(
                 viewModel = viewModel,
                 levelId = levelId,
                 onBack = {
