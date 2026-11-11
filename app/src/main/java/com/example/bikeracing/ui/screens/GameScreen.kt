@@ -50,11 +50,11 @@ fun GameScreen(
     val screenWidthPx = with(LocalDensity.current) { configuration.screenWidthDp.dp.toPx() }
     val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
     
-    // Player bike state
-    var playerX by remember { mutableStateOf(screenWidthPx / 2 - 70f) }
-    var playerY by remember { mutableStateOf(screenHeightPx - 300f) }
-    val bikeWidth = 140f
-    val bikeHeight = 200f
+    // Player bike state - smaller sizes to fit screen better
+    var playerX by remember { mutableStateOf(screenWidthPx / 2 - 50f) }
+    var playerY by remember { mutableStateOf(screenHeightPx - 250f) }
+    val bikeWidth = 100f  // Reduced from 140f
+    val bikeHeight = 140f  // Reduced from 200f
     
     // Road scrolling
     var road1Y by remember { mutableStateOf(0f) }
@@ -64,9 +64,9 @@ fun GameScreen(
     // Enemy bikes
     val enemyBikes = remember {
         mutableStateListOf(
-            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -200f, 10),
-            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -400f, 12),
-            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -600f, 14)
+            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -140f, 10),
+            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -280f, 12),
+            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -420f, 14)
         )
     }
     
@@ -89,7 +89,7 @@ fun GameScreen(
                 enemy.y += enemy.speed
                 
                 if (enemy.y > screenHeightPx) {
-                    enemy.y = -200f
+                    enemy.y = -140f
                     enemy.x = Random.nextFloat() * (screenWidthPx - bikeWidth)
                     score++
                     
@@ -103,7 +103,7 @@ fun GameScreen(
             }
             
             // Check collisions
-            val padding = 30f
+            val padding = 20f  // Reduced padding for smaller bikes
             val playerRect = androidx.compose.ui.geometry.Rect(
                 playerX + padding,
                 playerY + padding,
@@ -162,7 +162,7 @@ fun GameScreen(
                 painter = painterResource(id = R.drawable.bikeblue),
                 contentDescription = "Enemy Bike",
                 modifier = Modifier
-                    .size(140.dp, 200.dp)
+                    .size(100.dp, 140.dp)
                     .offset {
                         IntOffset(
                             enemy.x.roundToInt(),
@@ -177,7 +177,7 @@ fun GameScreen(
             painter = painterResource(id = R.drawable.redbike),
             contentDescription = "Player Bike",
             modifier = Modifier
-                .size(140.dp, 200.dp)
+                .size(100.dp, 140.dp)
                 .offset {
                     IntOffset(
                         playerX.roundToInt(),
@@ -234,17 +234,17 @@ fun GameScreen(
                     gameRunning = true
                     showGameOver = false
                     roadSpeed = 15f
-                    playerX = screenWidthPx / 2 - 70f
-                    playerY = screenHeightPx - 300f
+                    playerX = screenWidthPx / 2 - 50f
+                    playerY = screenHeightPx - 250f
                     road1Y = 0f
                     road2Y = -screenHeightPx
                     
                     enemyBikes.clear()
                     enemyBikes.addAll(
                         listOf(
-                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -200f, 10),
-                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -400f, 12),
-                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -600f, 14)
+                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -140f, 10),
+                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -280f, 12),
+                            EnemyBike(Random.nextFloat() * (screenWidthPx - bikeWidth), -420f, 14)
                         )
                     )
                 },
